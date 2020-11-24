@@ -14,6 +14,7 @@ import Container from "@material-ui/core/Container";
 import Alert from "@material-ui/lab/Alert";
 import { Formik } from "formik";
 import { useFormik } from "formik";
+import { auth, db, storage } from "../firebase";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -33,12 +34,35 @@ const useStyles = makeStyles((theme) => ({
   submit: {
     margin: theme.spacing(1, 0, 1),
     borderRadius: theme.spacing(8),
-    backgroundColor: "tomato",
+    // backgroundColor: "tomato",
   },
   input: {
     borderRadius: "1rem",
   },
 }));
+
+const validate = (values) => {
+  const errors = {};
+  if (!values.displayName) {
+    errors.displayName = "Required";
+  } else if (values.displayName.length > 15) {
+    errors.displayName = "Must be 15 characters or less";
+  }
+
+  //    if (!values.lastName) {
+  //      errors.lastName = "Required";
+  //    } else if (values.lastName.length > 20) {
+  //      errors.lastName = "Must be 20 characters or less";
+  //    }
+
+  if (!values.email) {
+    errors.email = "Required";
+  } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
+    errors.email = "Invalid email address";
+  }
+
+  return errors;
+};
 
 export default function SignUp() {
   const classes = useStyles();
@@ -48,10 +72,26 @@ export default function SignUp() {
       displayName: "",
       password: "",
     },
+    validate,
     onSubmit: (values) => {
       alert(JSON.stringify(values, null, 2));
     },
   });
+
+  const singUp = (e) => {
+    e.preventDefault();
+    auth
+      .createUserWithEmailAndPassword(
+        formik.values.email,
+        formik.values.password
+      )
+      .then((authUser) => {
+        authUser.user.updateProfile({
+          displayName: formik.values.displayName,
+        });
+      })
+      .catch((err) => alert(err.message));
+  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -80,9 +120,9 @@ export default function SignUp() {
                 autoFocus
               />
 
-              <Alert severity="error">
-                This is an error alert — check it out!
-              </Alert>
+              {formik.errors.firstName ? (
+                <Alert severity="error">{formik.errors.displayName}</Alert>
+              ) : null}
             </Grid>
 
             <Grid item xs={12} className={classes.input}>
@@ -125,6 +165,7 @@ export default function SignUp() {
                 variant="contained"
                 color="primary"
                 className={classes.submit}
+                onClick={singUp}
               >
                 Sign Up
               </Button>
@@ -132,7 +173,7 @@ export default function SignUp() {
             <Grid item xs={12} sm={6}>
               <Button
                 variant="contained"
-                color="secondary"
+                color="primary"
                 className={classes.submit}
               >
                 Google Sign Up
