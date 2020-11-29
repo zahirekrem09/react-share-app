@@ -64,7 +64,7 @@ const validate = (values) => {
   return errors;
 };
 
-export default function SignUp() {
+export default function SignIn({ setAuth }) {
   const classes = useStyles();
   const formik = useFormik({
     initialValues: {
@@ -93,7 +93,7 @@ export default function SignUp() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Sign up
+          Sign In
         </Typography>
         <form className={classes.form} onSubmit={formik.handleSubmit}>
           <Grid container spacing={2}>
@@ -138,19 +138,24 @@ export default function SignUp() {
                 color="primary"
                 className={classes.submit}
                 onClick={singIn}
+                size="small"
+                fullWidth
               >
                 Sign In
               </Button>
             </Grid>
-            {/* <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={6}>
               <Button
                 variant="contained"
                 color="primary"
                 className={classes.submit}
+                onClick={() => setAuth("SINGUP")}
+                size="small"
+                fullWidth
               >
-                Google Sign Up
+                Sign Up
               </Button>
-            </Grid> */}
+            </Grid>
           </Grid>
 
           <Grid container justify="flex-end">

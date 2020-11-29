@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -12,9 +12,10 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Alert from "@material-ui/lab/Alert";
-import { Formik } from "formik";
+import * as Yup from "yup";
 import { useFormik } from "formik";
 import { auth, db, storage } from "../firebase";
+import firebase from "firebase";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -34,6 +35,7 @@ const useStyles = makeStyles((theme) => ({
   submit: {
     margin: theme.spacing(1, 0, 1),
     borderRadius: theme.spacing(8),
+    alignItems: "center",
     // backgroundColor: "tomato",
   },
   input: {
@@ -41,30 +43,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const validate = (values) => {
-  const errors = {};
-  if (!values.displayName) {
-    errors.displayName = "Required";
-  } else if (values.displayName.length > 15) {
-    errors.displayName = "Must be 15 characters or less";
-  }
-
-  //    if (!values.lastName) {
-  //      errors.lastName = "Required";
-  //    } else if (values.lastName.length > 20) {
-  //      errors.lastName = "Must be 20 characters or less";
-  //    }
-
-  if (!values.email) {
-    errors.email = "Required";
-  } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
-    errors.email = "Invalid email address";
-  }
-
-  return errors;
-};
-
-export default function SignUp() {
+const SignupSchema = Yup.object().shape({
+  displayName: Yup.string()
+    .min(2, "Too Short!")
+    .max(50, "Too Long!")
+    .required("Required"),
+  password: Yup.string()
+    .min(2, "Too Short!")
+    .max(50, "Too Long!")
+    .required("Required"),
+  email: Yup.string().email("Invalid email").required("Required"),
+});
+export default function SignUp({ setAuth }) {
+  const [errMsg, setErrMsg] = useState(null);
   const classes = useStyles();
   const formik = useFormik({
     initialValues: {
@@ -72,7 +63,7 @@ export default function SignUp() {
       displayName: "",
       password: "",
     },
-    validate,
+
     onSubmit: (values) => {
       alert(JSON.stringify(values, null, 2));
     },
@@ -90,7 +81,13 @@ export default function SignUp() {
           displayName: formik.values.displayName,
         });
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => setErrMsg(err.message));
+  };
+
+  const useGoogleProvider = () => {
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: "select_account" });
+    auth.signInWithPopup(googleProvider);
   };
 
   return (
@@ -119,10 +116,6 @@ export default function SignUp() {
                 value={formik.values.displayName}
                 autoFocus
               />
-
-              {formik.errors.firstName ? (
-                <Alert severity="error">{formik.errors.displayName}</Alert>
-              ) : null}
             </Grid>
 
             <Grid item xs={12} className={classes.input}>
@@ -152,6 +145,7 @@ export default function SignUp() {
                 value={formik.values.password}
               />
             </Grid>
+            {errMsg ? <Alert severity="error">{errMsg}</Alert> : null}
             <Grid item xs={12}>
               <FormControlLabel
                 control={<Checkbox value="allowExtraEmails" color="primary" />}
@@ -159,24 +153,42 @@ export default function SignUp() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <Button
                 type="submit"
                 variant="contained"
                 color="primary"
                 className={classes.submit}
                 onClick={singUp}
+                size="small"
+                fullWidth
               >
                 Sign Up
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4} justify="center" alignItems="center">
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                className={classes.submit}
+                onClick={() => setAuth("LOGIN")}
+                size="small"
+                fullWidth
+              >
+                Sign In
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={4}>
               <Button
                 variant="contained"
                 color="primary"
                 className={classes.submit}
+                size="small"
+                onClick={useGoogleProvider}
+                fullWidth
               >
-                Google Sign Up
+                Google
               </Button>
             </Grid>
           </Grid>

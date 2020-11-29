@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useCallback } from "react";
 import { fade, makeStyles } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -14,7 +14,9 @@ import AccountCircle from "@material-ui/icons/AccountCircle";
 import MailIcon from "@material-ui/icons/Mail";
 import NotificationsIcon from "@material-ui/icons/Notifications";
 import MoreIcon from "@material-ui/icons/MoreVert";
+import { ExitToApp } from "@material-ui/icons";
 import { auth, db, storage } from "../firebase";
+import { firebaseAuthContext } from "../context/AuthContext";
 
 const useStyles = makeStyles((theme) => ({
   grow: {
@@ -80,12 +82,15 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const displayName = auth.currentUser.displayName;
+const displayName = auth?.currentUser?.displayName;
 
 export default function Navbar() {
+  const { user } = useContext(firebaseAuthContext);
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
+
+  console.log(user?.displayName);
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -93,6 +98,10 @@ export default function Navbar() {
   const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
+  const handleSingOut = useCallback(() => {
+    auth.signOut();
+  }, []);
 
   const handleMobileMenuClose = () => {
     setMobileMoreAnchorEl(null);
@@ -118,10 +127,16 @@ export default function Navbar() {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}>
-        {displayName && displayName}
-      </MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      {auth?.currentUser ? (
+        <MenuItem onClick={handleMenuClose}>
+          {auth?.currentUser.displayName}
+        </MenuItem>
+      ) : (
+        <>
+          <MenuItem onClick={() => console.log("login")}>Login</MenuItem>
+          <MenuItem onClick={() => console.log("register")}>Register</MenuItem>
+        </>
+      )}
     </Menu>
   );
 
@@ -163,6 +178,20 @@ export default function Navbar() {
         </IconButton>
         <p>Profile</p>
       </MenuItem>
+
+      {auth.currentUser && (
+        <MenuItem onClick={handleSingOut}>
+          <IconButton
+            aria-label="logout of current user"
+            aria-controls="primary-search-account-menu"
+            aria-haspopup="true"
+            color="inherit"
+          >
+            <ExitToApp />
+          </IconButton>
+          <p>Logout</p>
+        </MenuItem>
+      )}
     </Menu>
   );
 
@@ -179,7 +208,7 @@ export default function Navbar() {
             <MenuIcon />
           </IconButton>
           <Typography className={classes.title} variant="h6" noWrap>
-            Material-UI
+            ecoo
           </Typography>
           <div className={classes.search}>
             <div className={classes.searchIcon}>
@@ -206,6 +235,13 @@ export default function Navbar() {
                 <NotificationsIcon />
               </Badge>
             </IconButton>
+
+            {auth.currentUser && (
+              <IconButton color="inherit" onClick={() => auth.signOut()}>
+                <ExitToApp />
+              </IconButton>
+            )}
+
             <IconButton
               edge="end"
               aria-label="account of current user"
